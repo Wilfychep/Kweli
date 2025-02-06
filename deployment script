@@ -1,0 +1,31 @@
+const { Wallet, Provider, ContractFactory } = require("zksync-web3");
+const { ethers } = require("ethers");
+require("dotenv").config();
+
+async function main() {
+    console.log("Deploying to zkSync Era Testnet...");
+
+    // Load environment variables (from .env)
+    const zkSyncProvider = new Provider("https://testnet.era.zksync.dev");
+    const ethProvider = new ethers.providers.JsonRpcProvider("https://ethereum-sepolia.blockpi.network/v1/rpc/public");
+    const wallet = new Wallet(process.env.PRIVATE_KEY, zkSyncProvider, ethProvider);
+
+    console.log(`Wallet Address: ${wallet.address}`);
+
+    // Load and compile the contract
+    const artifact = require("../artifacts-zk/contracts/KweliVerifier.sol/KweliVerifier.json");
+    const factory = new ContractFactory(artifact.abi, artifact.bytecode, wallet);
+
+  
+    const contract = await factory.deploy();
+    await contract.deployed();
+
+    console.log(`✅ Contract Deployed at: ${contract.address}`);
+
+    return contract.address;
+}
+
+main().catch((error) => {
+    console.error("❌ Deployment failed:", error);
+    process.exit(1);
+});
