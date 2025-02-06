@@ -1,0 +1,79 @@
+
+KWELI: Zero-Knowledge (ZK) Deepfake Detection MVP
+Technologies: React Native (Frontend), Node.js/Express (Backend), zk-SNARKs (Verification)
+
+
+// Backend: Node.js with Express
+const express = require('express');
+const multer = require('multer');
+const fs = require('fs');
+const { verifyProof } = require('./zk/verify');
+
+const app = express();
+const upload = multer({ dest: 'uploads/' });
+
+app.post('/upload', upload.single('file'), async (req, res) => {
+    try {
+        const file = req.file;
+        console.log(`File uploaded: ${file.path}`);
+        
+        // Deepfake detection logic (Placeholder)
+        const isDeepfake = Math.random() < 0.5; // Simulated detection result
+        
+        // zk-SNARK proof generation (Mocked)
+        const proof = { verified: true, confidence: 0.95 };
+        
+        res.json({ status: 'success', isDeepfake, proof });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ status: 'error', message: 'Internal server error' });
+    }
+});
+
+app.listen(5000, () => console.log('Server running on port 5000'));
+
+// React Native (Frontend): Simple Upload UI
+import React, { useState } from 'react';
+import { View, Button, Text, Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+
+const App = () => {
+    const [image, setImage] = useState(null);
+    const [result, setResult] = useState(null);
+
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            base64: false,
+        });
+
+        if (!result.canceled) {
+            setImage(result.uri);
+            uploadImage(result.uri);
+        }
+    };
+
+    const uploadImage = async (uri) => {
+        let formData = new FormData();
+        formData.append('file', { uri, name: 'upload.jpg', type: 'image/jpeg' });
+
+        let response = await fetch('http://localhost:5000/upload', {
+            method: 'POST',
+            body: formData,
+        });
+
+        let data = await response.json();
+        setResult(data);
+    };
+
+    return (
+        <View>
+            <Button title="Pick Image" onPress={pickImage} />
+            {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
+            {result && <Text>Deepfake: {result.isDeepfake ? 'Yes' : 'No'}</Text>}
+        </View>
+    );
+};
+
+export default App;
